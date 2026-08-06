@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ITC - Download</title>
+  <meta name="description" content="Download the ITC app. Latest APK versions.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <h1 id="appName"></h1>
+      <p>Download the latest version of the app</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="error" class="error hidden"></div>
+    <div id="list"></div>
+    <p id="empty" class="empty hidden">No versions published yet. Check back soon!</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container" id="footerText"></div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script>
+    const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
+    document.getElementById("appName").textContent = APP_NAME;
+    document.getElementById("footerText").textContent = APP_NAME + " \u00A9 " + new Date().getFullYear();
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      const units = ["KB", "MB", "GB"];
+      let value = bytes;
+      let unit = "B";
+      for (const u of units) {
+        value = value / 1024;
+        unit = u;
+        if (value < 1024) break;
+      }
+      return value.toFixed(value >= 100 ? 0 : 1) + " " + unit;
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString(undefined, {
+        year: "numeric", month: "short", day: "numeric"
+      });
+    }
+
+    function card(v, isLatest) {
+      const el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML = `
+        <div class="card-top">
+          <span class="version-name"></span>
+          <span class="badge"></span>
+        </div>
+        <div class="meta">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        ${v.notes ? `<div class="notes"></div>` : ""}
+        <div class="download-row">
+          <span class="downloads"></span>
+          <a class="btn" href="#" download></a>
+        </div>`;
+      el.querySelector(".version-name").textContent = v.version_name;
+      el.querySelector(".badge").textContent = (isLatest ? "Latest \u00B7 " : "") + "v" + v.version_name;
+      if (isLatest) el.querySelector(".badge").classList.add("latest");
+      el.querySelector(".meta span:nth-child(1)").textContent = v.file_name;
+      el.querySelector(".meta span:nth-child(2)").textContent = formatSize(v.file_size);
+      el.querySelector(".meta span:nth-child(3)").textContent = formatDate(v.created_at);
+      if (v.version_code !== null && v.version_code !== undefined) {
+        el.querySelector(".meta span:nth-child(1)").textContent += " \u00B7 code " + v.version_code;
+      }
+      if (v.notes) el.querySelector(".notes").textContent = v.notes;
+      el.querySelector(".downloads").textContent = v.download_count + (v.download_count === 1 ? " download" : " downloads");
+      const link = el.querySelector(".btn");
+      link.href = SITE_URL + encodeURIComponent(v.storage_path);
+      link.setAttribute("download", v.file_name);
+      link.textContent = "Download APK";
+      link.addEventListener("click", function () {
+        supabase.rpc("increment_download", { p_id: v.id });
+        const count = el.querySelector(".downloads");
+        const next = v.download_count + 1;
+        count.textContent = next + (next === 1 ? " download" : " downloads");
+      });
+      return el;
+    }
+
+    async function load() {
+      const { data, error } = await supabase
+        .from("apk_versions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        document.getElementById("error").textContent = "Failed to load versions: " + error.message;
+        document.getElementById("error").classList.remove("hidden");
+        return;
+      }
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+      document.getElementById("empty").classList.toggle("hidden", data.length > 0);
+      data.forEach((v, i) => list.appendChild(card(v, i === 0)));
+    }
+
+    load();
+  </script>
+</body>
+</html>

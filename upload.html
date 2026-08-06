@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Upload APK</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container page-header">
+    <h1>Upload APK</h1>
+    <button id="signOutBtn" class="btn ghost hidden">Sign out</button>
+  </div>
+
+  <main class="container">
+    <div id="error" class="error hidden"></div>
+    <div id="success" class="success hidden"></div>
+
+    <div id="loginView">
+      <div class="card form-card">
+        <h2 style="font-size:18px;">Uploader sign in</h2>
+        <label for="email">Email</label>
+        <input type="email" id="email" autocomplete="email">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password">
+        <div style="margin-top:20px;">
+          <button id="loginBtn" class="btn" style="width:100%; justify-content:center;">Sign in</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="panelView" class="hidden">
+      <div class="card">
+        <h2 style="font-size:18px;">Publish a new version</h2>
+        <label for="versionName">Version name</label>
+        <input type="text" id="versionName" placeholder="e.g. 2.1.0">
+        <label for="versionCode">Version code (optional)</label>
+        <input type="number" id="versionCode" placeholder="e.g. 21">
+        <label for="notes">Release notes (optional)</label>
+        <textarea id="notes" placeholder="What's new in this version?"></textarea>
+        <label>APK file</label>
+        <div id="fileDrop" class="file-drop">
+          <span id="fileLabel">Click or drop your .apk file here</span>
+        </div>
+        <input type="file" id="fileInput" accept=".apk,.zip" class="hidden">
+        <div id="progressWrap" class="progress hidden"><div id="progressBar" class="progress-bar"></div></div>
+        <div style="margin-top:20px;">
+          <button id="uploadBtn" class="btn" style="width:100%; justify-content:center;" disabled>Upload</button>
+        </div>
+      </div>
+
+      <h3 class="section-title">Published versions</h3>
+      <div id="manageList"></div>
+      <p id="manageEmpty" class="empty hidden">Nothing published yet.</p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script>
+    const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
+
+    const $ = id => document.getElementById(id);
+    let selectedFile = null;
+
+    function showError(msg) {
+      $("error").textContent = msg;
+      $("error").classList.remove("hidden");
+    }
+
+    function clearMessages() {
+      $("error").classList.add("hidden");
+      $("success").classList.add("hidden");
+    }
+
+    function showSuccess(msg) {
+      $("success").textContent = msg;
+      $("success").classList.remove("hidden");
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      const units = ["KB", "MB", "GB"];
+      let value = bytes;
+      let unit = "B";
+      for (const u of units) {
+        value = value / 1024;
+        unit = u;
+        if (value < 1024) break;
+      }
+      return value.toFixed(value >= 100 ? 0 : 1) + " " + unit;
+    }
+
+    $("loginBtn").addEventListener("click", async () => {
+      clearMessages();
+      $("loginBtn").disabled = true;
+      const email = $("email").value.trim();
+      const password = $("password").value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      $("loginBtn").disabled = false;
+      if (error) {
+        showError("Sign in failed: " + error.message);
+        return;
+      }
+      enterPanel();
+    });
+
+    $("signOutBtn").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      location.reload();
+    });
+
+    function enterPanel() {
+      $("loginView").classList.add("hidden");
+      $("panelView").classList.remove("hidden");
+      $("signOutBtn").classList.remove("hidden");
+      loadVersions();
+    }
+
+    const fileDrop = $("fileDrop");
+    const fileInput = $("fileInput");
+
+    fileDrop.addEventListener("click", () => fileInput.click());
+    fileDrop.addEventListener("dragover", e => {
+      e.preventDefault();
+      fileDrop.classList.add("drag");
+    });
+    fileDrop.addEventListener("dragleave", () => fileDrop.classList.remove("drag"));
+    fileDrop.addEventListener("drop", e => {
+      e.preventDefault();
+      fileDrop.classList.remove("drag");
+      if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files.length) setFile(fileInput.files[0]);
+    });
+
+    function setFile(file) {
+      const isApk = /\.apk$/i.test(file.name) || file.type === "application/vnd.android.package-archive";
+      if (!isApk) {
+        showError("Please choose an .apk file");
+        selectedFile = null;
+        $("fileLabel").textContent = "Click or drop your .apk file here";
+        $("uploadBtn").disabled = true;
+        return;
+      }
+      selectedFile = file;
+      $("fileLabel").innerHTML = '<span class="file-name">' + file.name + "</span> (" + formatSize(file.size) + ")";
+      $("uploadBtn").disabled = false;
+      clearMessages();
+    }
+
+    $("uploadBtn").addEventListener("click", async () => {
+      clearMessages();
+      const versionName = $("versionName").value.trim();
+      if (!versionName) {
+        showError("Version name is required");
+        return;
+      }
+      if (!selectedFile) {
+        showError("Choose an .apk file first");
+        return;
+      }
+      const versionCode = $("versionCode").value ? parseInt($("versionCode").value, 10) : null;
+      const notes = $("notes").value.trim();
+      const path = "versions/" + Date.now() + "-" + selectedFile.name.replace(/[^\w.\-]/g, "_");
+
+      $("uploadBtn").disabled = true;
+      $("progressWrap").classList.remove("hidden");
+      $("progressBar").style.width = "0%";
+
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(path, selectedFile, {
+          cacheControl: "3600",
+          contentType: "application/vnd.android.package-archive",
+          upsert: false,
+          onUploadProgress: p => {
+            $("progressBar").style.width = Math.round(p.total ? (100 * p.loaded) / p.total : 0) + "%";
+          }
+        });
+
+      if (uploadError) {
+        showError("Upload failed: " + uploadError.message);
+        $("uploadBtn").disabled = false;
+        return;
+      }
+
+      const { error: insertError } = await supabase.from("apk_versions").insert({
+        version_name: versionName,
+        version_code: versionCode,
+        file_name: selectedFile.name,
+        file_size: selectedFile.size,
+        notes: notes || null,
+        storage_path: path
+      });
+
+      if (insertError) {
+        await supabase.storage.from(BUCKET_NAME).remove([path]);
+        showError("Publish failed: " + insertError.message);
+        $("uploadBtn").disabled = false;
+        return;
+      }
+
+      showSuccess("Version " + versionName + " published!");
+      $("versionName").value = "";
+      $("versionCode").value = "";
+      $("notes").value = "";
+      selectedFile = null;
+      $("fileInput").value = "";
+      $("fileLabel").textContent = "Click or drop your .apk file here";
+      $("uploadBtn").disabled = true;
+      $("progressWrap").classList.add("hidden");
+      loadVersions();
+    });
+
+    async function loadVersions() {
+      const { data, error } = await supabase
+        .from("apk_versions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        showError("Failed to load versions: " + error.message);
+        return;
+      }
+      const list = $("manageList");
+      list.innerHTML = "";
+      $("manageEmpty").classList.toggle("hidden", data.length > 0);
+      data.forEach(v => {
+        const el = document.createElement("div");
+        el.className = "card";
+        el.innerHTML = `
+          <div class="card-top">
+            <span class="version-name"></span>
+            <button class="btn danger" style="padding:8px 14px;">Delete</button>
+          </div>
+          <div class="meta"><span></span><span></span><span></span></div>`;
+        el.querySelector(".version-name").textContent = v.version_name;
+        el.querySelector(".meta span:nth-child(1)").textContent = v.file_name;
+        el.querySelector(".meta span:nth-child(2)").textContent = formatSize(v.file_size);
+        el.querySelector(".meta span:nth-child(3)").textContent = new Date(v.created_at).toLocaleDateString();
+        el.querySelector(".btn").addEventListener("click", () => deleteVersion(v, el));
+        list.appendChild(el);
+      });
+    }
+
+    async function deleteVersion(v, el) {
+      if (!confirm("Delete version " + v.version_name + "? This cannot be undone.")) return;
+      el.querySelector(".btn").disabled = true;
+      const { error: fileError } = await supabase.storage.from(BUCKET_NAME).remove([v.storage_path]);
+      if (fileError) {
+        showError("Failed to delete file: " + fileError.message);
+        return;
+      }
+      const { error: rowError } = await supabase.from("apk_versions").delete().eq("id", v.id);
+      if (rowError) {
+        showError("Failed to remove version: " + rowError.message);
+        return;
+      }
+      el.remove();
+      showSuccess("Version " + v.version_name + " deleted.");
+    }
+
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) enterPanel();
+    })();
+  </script>
+</body>
+</html>
