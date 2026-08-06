@@ -5,20 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ITC - Download</title>
   <meta name="description" content="Download the ITC app. Latest APK versions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="hero">
     <div class="container">
+      <div class="hero-label">android release server</div>
       <h1 id="appName"></h1>
-      <p>Download the latest version of the app</p>
+      <p class="tagline" id="tagline"></p>
+
+      <div class="term">
+        <div class="term-bar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="term-title">itc@releases: ~/apks</span>
+        </div>
+        <div class="term-body">
+          <div class="line"><span class="prompt">$</span> itc --check-update --latest</div>
+          <div class="out" id="termOutput"></div>
+          <div class="line"><span class="prompt">$</span><span class="cursor"></span></div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-value" id="statVersions">0</span>
+          <span class="stat-label">RELEASES</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="statDownloads">0</span>
+          <span class="stat-label">DOWNLOADS</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value"><span class="pulse"></span>online</span>
+          <span class="stat-label">SERVER</span>
+        </div>
+      </div>
     </div>
   </header>
 
   <main class="container">
     <div id="error" class="error hidden"></div>
     <div id="list"></div>
-    <p id="empty" class="empty hidden">No versions published yet. Check back soon!</p>
+    <p id="empty" class="empty hidden"><span class="prompt">$</span> find releases --latest<br>no releases found. check back soon.</p>
   </main>
 
   <footer class="footer">
@@ -30,7 +61,8 @@
   <script>
     const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
     document.getElementById("appName").textContent = APP_NAME;
-    document.getElementById("footerText").textContent = APP_NAME + " \u00A9 " + new Date().getFullYear();
+    document.getElementById("tagline").innerHTML = "itc://" + APP_NAME.toLowerCase() + " <b>v2.1.0</b> \u00B7 direct apk distribution";
+    document.getElementById("footerText").innerHTML = "<span class=\"ok\">\u25A0</span> itc_release_server \u00B7 all systems operational \u00B7 " + new Date().getFullYear();
 
     function formatSize(bytes) {
       if (bytes < 1024) return bytes + " B";
@@ -55,40 +87,43 @@
       const el = document.createElement("div");
       el.className = "card";
       el.innerHTML = `
-        <div class="card-top">
-          <span class="version-name"></span>
-          <span class="badge"></span>
+        <div class="term-bar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="term-title">~/releases/</span>
         </div>
-        <div class="meta">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        ${v.notes ? `<div class="notes"></div>` : ""}
-        <div class="download-row">
-          <span class="downloads"></span>
-          <a class="btn" href="#" download></a>
+        <div class="card-body">
+          <div class="v-line">
+            <span class="v-label">release</span>
+            <span class="v-number"></span>
+            ${isLatest ? `<span class="tag-latest">LATEST</span>` : ""}
+          </div>
+          <div class="meta">
+            <div><span class="prompt">$</span> ls -la release.apk</div>
+            <div id="metaLine"></div>
+          </div>
+          ${v.notes ? `<div class="notes"></div>` : ""}
+          <div class="download-row">
+            <span class="dl-count"><b id="dlCount"></b> downloads</span>
+            <a class="btn" href="#" download></a>
+          </div>
         </div>`;
-      el.querySelector(".version-name").textContent = v.version_name;
-      el.querySelector(".badge").textContent = (isLatest ? "Latest \u00B7 " : "") + "v" + v.version_name;
-      if (isLatest) el.querySelector(".badge").classList.add("latest");
-      el.querySelector(".meta span:nth-child(1)").textContent = v.file_name;
-      el.querySelector(".meta span:nth-child(2)").textContent = formatSize(v.file_size);
-      el.querySelector(".meta span:nth-child(3)").textContent = formatDate(v.created_at);
+      el.querySelector(".term-title").textContent = "~/releases/" + v.file_name;
+      el.querySelector(".v-number").textContent = "v" + v.version_name;
+      let meta = v.file_name + " \u00B7 " + formatSize(v.file_size) + " \u00B7 " + formatDate(v.created_at);
       if (v.version_code !== null && v.version_code !== undefined) {
-        el.querySelector(".meta span:nth-child(1)").textContent += " \u00B7 code " + v.version_code;
+        meta += " \u00B7 code " + v.version_code;
       }
-      if (v.notes) el.querySelector(".notes").textContent = v.notes;
-      el.querySelector(".downloads").textContent = v.download_count + (v.download_count === 1 ? " download" : " downloads");
+      el.querySelector("#metaLine").textContent = meta;
+      if (v.notes) el.querySelector(".notes").textContent = "$ itc changelog --release v" + v.version_name + "\n" + v.notes;
+      el.querySelector("#dlCount").textContent = v.download_count.toLocaleString();
       const link = el.querySelector(".btn");
       link.href = SITE_URL + encodeURIComponent(v.storage_path);
       link.setAttribute("download", v.file_name);
-      link.textContent = "Download APK";
+      link.textContent = "\u25B8 download apk";
       link.addEventListener("click", function () {
         supabase.rpc("increment_download", { p_id: v.id });
-        const count = el.querySelector(".downloads");
-        const next = v.download_count + 1;
-        count.textContent = next + (next === 1 ? " download" : " downloads");
+        v.download_count += 1;
+        el.querySelector("#dlCount").textContent = v.download_count.toLocaleString();
       });
       return el;
     }
@@ -99,10 +134,16 @@
         .select("*")
         .order("created_at", { ascending: false });
       if (error) {
-        document.getElementById("error").textContent = "Failed to load versions: " + error.message;
+        document.getElementById("error").textContent = "connection error: " + error.message;
         document.getElementById("error").classList.remove("hidden");
         return;
       }
+      document.getElementById("statVersions").textContent = data.length;
+      document.getElementById("statDownloads").textContent = data.reduce((s, v) => s + (v.download_count || 0), 0).toLocaleString();
+      const latest = data[0];
+      document.getElementById("termOutput").innerHTML = latest
+        ? "> latest build: <span class=\"hl\">v" + latest.version_name + "</span> \u00B7 " + data.length + " release(s) online \u00B7 " + formatSize(latest.file_size)
+        : "> no releases online yet \u00B7 awaiting first build";
       const list = document.getElementById("list");
       list.innerHTML = "";
       document.getElementById("empty").classList.toggle("hidden", data.length > 0);

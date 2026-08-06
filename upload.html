@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Upload APK</title>
+  <title>ITC - Upload</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container page-header">
-    <h1>Upload APK</h1>
+    <h1># itc uploader</h1>
     <button id="signOutBtn" class="btn ghost hidden">Sign out</button>
   </div>
 
@@ -18,7 +21,7 @@
 
     <div id="loginView">
       <div class="card form-card">
-        <h2 style="font-size:18px;">Uploader sign in</h2>
+        <h2 class="section-title" style="margin:0 0 4px;">Uploader sign in</h2>
         <label for="email">Email</label>
         <input type="email" id="email" autocomplete="email">
         <label for="password">Password</label>
@@ -31,7 +34,7 @@
 
     <div id="panelView" class="hidden">
       <div class="card">
-        <h2 style="font-size:18px;">Publish a new version</h2>
+        <h2 class="section-title" style="margin:0 0 4px;">Publish a new release</h2>
         <label for="versionName">Version name</label>
         <input type="text" id="versionName" placeholder="e.g. 2.1.0">
         <label for="versionCode">Version code (optional)</label>
@@ -49,9 +52,9 @@
         </div>
       </div>
 
-      <h3 class="section-title">Published versions</h3>
+      <h3 class="section-title">Published releases</h3>
       <div id="manageList"></div>
-      <p id="manageEmpty" class="empty hidden">Nothing published yet.</p>
+      <p id="manageEmpty" class="empty hidden"><span class="prompt">$</span> ls releases<br>no releases published yet.</p>
     </div>
   </main>
 
@@ -230,15 +233,18 @@
         const el = document.createElement("div");
         el.className = "card";
         el.innerHTML = `
-          <div class="card-top">
-            <span class="version-name"></span>
-            <button class="btn danger" style="padding:8px 14px;">Delete</button>
-          </div>
-          <div class="meta"><span></span><span></span><span></span></div>`;
-        el.querySelector(".version-name").textContent = v.version_name;
-        el.querySelector(".meta span:nth-child(1)").textContent = v.file_name;
-        el.querySelector(".meta span:nth-child(2)").textContent = formatSize(v.file_size);
-        el.querySelector(".meta span:nth-child(3)").textContent = new Date(v.created_at).toLocaleDateString();
+          <div class="card-body">
+            <div class="v-line">
+              <span class="v-label">release</span>
+              <span class="v-number"></span>
+              <button class="btn danger" style="margin-left:auto; padding:8px 14px;">rm</button>
+            </div>
+            <div class="meta"><div><span class="prompt">$</span> <span></span> \u00B7 <span></span> \u00B7 <span></span></div></div>
+          </div>`;
+        el.querySelector(".v-number").textContent = "v" + v.version_name;
+        el.querySelector(".meta span:nth-child(2)").textContent = v.file_name;
+        el.querySelector(".meta span:nth-child(3)").textContent = formatSize(v.file_size);
+        el.querySelector(".meta span:nth-child(4)").textContent = new Date(v.created_at).toLocaleDateString();
         el.querySelector(".btn").addEventListener("click", () => deleteVersion(v, el));
         list.appendChild(el);
       });
