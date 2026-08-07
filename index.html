@@ -144,6 +144,21 @@
     .footer { text-align: center; color: var(--faint); font-size: 12px; padding: 34px 20px 44px; }
     .footer .ok { color: var(--accent); }
 
+    .vision { margin-top: 46px; }
+    .vision h2 { color: #fff; font-size: 20px; letter-spacing: 1px; margin-bottom: 6px; }
+    .vision h2::before { content: "> "; color: var(--accent); }
+    .vision .sub { color: var(--faint); font-size: 12px; margin-bottom: 20px; }
+    .v-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+    .v-card {
+      background: linear-gradient(180deg, rgba(16,22,38,0.95), rgba(10,14,27,0.95));
+      border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 12px;
+      padding: 16px; transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .v-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .v-card h3 { color: var(--accent); font-size: 13px; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .v-card h3::before { content: "> "; }
+    .v-card p { color: #aeb9cc; font-size: 12px; line-height: 1.7; }
+
     @media (max-width: 520px) {
       h1 { font-size: 38px; }
       .container { padding-top: 32px; }
@@ -181,6 +196,21 @@
     <div id="error" class="error hidden"></div>
     <div id="list"></div>
     <p id="empty" class="empty hidden"><span class="prompt">$</span> find releases --latest<br>&gt; no releases found. check back soon.</p>
+
+    <section class="vision">
+      <h2>upcoming &middot; the vision</h2>
+      <p class="sub">the release server is the first step &mdash; the runtime around this workspace is becoming alive.</p>
+      <div class="v-grid">
+        <div class="v-card"><h3>Self-healing engine</h3><p>Failures detected and auto-patched by AI, with proposed fixes sent back to contributors.</p></div>
+        <div class="v-card"><h3>Cinematic replay</h3><p>Coding sessions replayed as branching, interactive storyboards &mdash; debugging like film.</p></div>
+        <div class="v-card"><h3>Persona evolution</h3><p>Assistants that shift tone, expertise, and style as the project matures.</p></div>
+        <div class="v-card"><h3>Cross-device flow</h3><p>Start on your phone, throw the session to any big screen with live annotations.</p></div>
+        <div class="v-card"><h3>Contributor holograms</h3><p>Past contributors visible over their own code decisions, guiding you through.</p></div>
+        <div class="v-card"><h3>Quantum branching</h3><p>Parallel futures of the codebase you step between and compare.</p></div>
+        <div class="v-card"><h3>Emotion-aware UI</h3><p>Visuals, tone, and persona that adapt to how you feel in long sessions.</p></div>
+        <div class="v-card"><h3>Corpus-aware IDE</h3><p>Context pulled from docs, commits, and chats for inline suggestions.</p></div>
+      </div>
+    </section>
   </main>
 
   <footer class="footer"><span class="ok">&#9632;</span> itc_release_server &middot; all systems operational &middot; <span id="year"></span></footer>
@@ -194,7 +224,7 @@
     var API_URL = APP_URL + "/rest/v1/";
 
     document.getElementById("appName").textContent = APP_NAME;
-    document.getElementById("tagline").innerHTML = "itc://" + APP_NAME.toLowerCase() + " <b>v2.1.0</b> &middot; direct apk distribution";
+    document.getElementById("tagline").innerHTML = "itc://" + APP_NAME.toLowerCase() + " <b>v0.0.0</b> &middot; direct apk distribution";
     document.getElementById("year").textContent = new Date().getFullYear();
 
     function fmtSize(b) {
@@ -278,6 +308,9 @@
           countUp(document.getElementById("statVersions"), versions);
           countUp(document.getElementById("statDownloads"), downloads);
           var latest = data[0];
+          if (latest) {
+            document.getElementById("tagline").innerHTML = "itc://" + APP_NAME.toLowerCase() + " <b>v" + esc(latest.version_name) + "</b> &middot; direct apk distribution";
+          }
           var text = latest
             ? "> latest build: <span class=\"hl\">v" + esc(latest.version_name) + "</span> &middot; " + versions + " release(s) online &middot; " + fmtSize(latest.file_size)
             : "> no releases online yet &middot; awaiting first build";
