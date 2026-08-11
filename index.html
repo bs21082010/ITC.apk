@@ -7,10 +7,31 @@
   <meta name="description" content="Download the ITC app. Latest APK versions.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <header class="site-header">
+    <div class="container">
+      <a class="logo" href="index.html"><span class="logo-ic" id="logoIc"></span><span id="logoName"></span></a>
+      <nav class="nav" id="navApps"></nav>
+      <div class="header-right">
+        <span class="manage-text">Manage Your Downloaded Apps</span>
+        <a class="btn" href="upload.html">LOG IN</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="promo">
+    <div class="container">
+      <div>
+        <h3>Add APK Downloader Chrome Extension</h3>
+        <p>Download free APK/XAPK files from Google Play Store without a login account.</p>
+      </div>
+      <a class="btn" id="promoBtn" href="#">Install Now</a>
+    </div>
+  </div>
+
   <header class="hero">
     <div class="container">
       <div class="hero-label">android release server</div>
@@ -48,13 +69,73 @@
 
   <main class="container">
     <div id="error" class="error hidden"></div>
-    <div id="list"></div>
-    <p id="empty" class="empty hidden"><span class="prompt">$</span> find releases --latest<br>no releases found. check back soon.</p>
+
+    <h2 class="section-title">Top <span id="featTitle"></span><span class="sub">Latest releases</span></h2>
+    <div id="featuredGrid" class="featured-grid"></div>
+    <p id="empty" class="empty hidden"><span class="prompt">$</span> find releases --latest<br>no releases online yet. check back soon.</p>
+
+    <h2 class="section-title">Trending Searches</h2>
+    <div class="trending" id="trending"></div>
+
+    <div class="use-app" id="useApp">
+      <div class="app-icon icon-itc" id="useAppIcon">I</div>
+      <div>
+        <h3>Use <span id="useAppName"></span> App</h3>
+        <p id="useAppDesc">Fast and safe APK installer</p>
+        <details class="howto">
+          <summary>How to install XAPK / APK file</summary>
+          <ol>
+            <li>Tap the downloaded APK file in your notifications or Downloads folder.</li>
+            <li>Allow "Install unknown apps" for your browser or file manager when prompted.</li>
+            <li>Confirm the installation and open the app.</li>
+          </ol>
+        </details>
+      </div>
+      <a class="btn green" id="useAppBtn" href="#">Download</a>
+    </div>
+
+    <h2 class="section-title">Latest Update</h2>
+    <div class="update-list" id="updateList"></div>
   </main>
 
-  <footer class="footer">
-    <div class="container" id="footerText"></div>
+  <footer class="discover">
+    <div class="container">
+      <div class="discover-grid">
+        <div>
+          <h4>Discover</h4>
+          <ul id="discoverApps"></ul>
+        </div>
+        <div>
+          <h4>Trending Searches</h4>
+          <ul id="discoverTrending"></ul>
+        </div>
+        <div>
+          <h4>Follow Us</h4>
+          <div class="social">
+            <a href="#">Telegram</a>
+            <a href="#">Instagram</a>
+            <a href="#">Twitter X</a>
+            <a href="#">YouTube</a>
+          </div>
+        </div>
+      </div>
+    </div>
   </footer>
+
+  <div class="footer-bottom">
+    <div class="container">
+      <span id="copyright"></span>
+      <span id="footerStatus"></span>
+    </div>
+  </div>
+
+  <div class="cookie-banner" id="cookieBanner">
+    <div>Our website uses necessary cookies to enable basic functions and optional cookies to help us to enhance your user experience. <a href="#">Learn more</a> about our cookie policy.</div>
+    <div class="cookie-actions">
+      <button class="btn small outline" id="cookieNecessary">Only Necessary Cookies</button>
+      <button class="btn small" id="cookieAccept">Accept All</button>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -62,10 +143,46 @@
     const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
     const appId = new URLSearchParams(location.search).get("app") || "itc";
     const appMeta = APPS.find(a => a.id === appId) || APPS[0];
+    const iconClass = "icon-" + appId;
+
     document.title = appMeta.name + " - Download";
+    document.getElementById("logoIc").textContent = appMeta.name.charAt(0);
+    document.getElementById("logoName").textContent = appMeta.name;
     document.getElementById("appName").textContent = appMeta.name;
     document.getElementById("tagline").innerHTML = appMeta.id + "://" + appMeta.id + " <b>v2.1.0</b> \u00B7 direct apk distribution";
-    document.getElementById("footerText").innerHTML = "<span class=\"ok\">\u25A0</span> " + appMeta.id + "_release_server \u00B7 all systems operational \u00B7 " + new Date().getFullYear();
+    document.getElementById("featTitle").textContent = appMeta.name;
+    document.getElementById("useAppName").textContent = appMeta.name;
+    document.getElementById("useAppIcon").textContent = appMeta.name.charAt(0);
+    document.getElementById("useAppIcon").className = "app-icon " + iconClass;
+    document.getElementById("copyright").textContent = appMeta.name + " \u00A9 " + new Date().getFullYear();
+    document.getElementById("footerStatus").innerHTML = "<span style=\"color:#16a34a\">\u25A0</span> " + appMeta.id + "_release_server \u00B7 all systems operational";
+
+    const navApps = document.getElementById("navApps");
+    APPS.forEach(a => {
+      const link = document.createElement("a");
+      link.textContent = a.name;
+      link.href = "index.html?app=" + a.id;
+      if (a.id === appId) link.className = "active";
+      navApps.appendChild(link);
+    });
+
+    const trending = ["call of duty", "roblox", "codm", "vidmate", "summertime saga", "vpn", "netflix", "x", "nba", "happymod"];
+    document.getElementById("trending").innerHTML = trending.map(t =>
+      `<a class="chip" href="https://play.google.com/store/search?q=${encodeURIComponent(t)}" target="_blank" rel="noopener">${t}</a>`
+    ).join("");
+    document.getElementById("discoverTrending").innerHTML = trending.slice(0, 6).map(t => `<li><a href="#">${t}</a></li>`).join("");
+    document.getElementById("discoverApps").innerHTML = APPS.map(a =>
+      `<li><a href="index.html?app=${a.id}">${a.name} APK</a></li>`
+    ).join("");
+
+    const cookieBtn = document.getElementById("cookieBanner");
+    if (localStorage.getItem("itc_cookie_ok")) cookieBtn.classList.add("hidden");
+    function hideCookie() {
+      localStorage.setItem("itc_cookie_ok", "1");
+      cookieBtn.classList.add("hidden");
+    }
+    document.getElementById("cookieAccept").addEventListener("click", hideCookie);
+    document.getElementById("cookieNecessary").addEventListener("click", hideCookie);
 
     function formatSize(bytes) {
       if (bytes < 1024) return bytes + " B";
@@ -81,52 +198,56 @@
     }
 
     function formatDate(iso) {
-      return new Date(iso).toLocaleDateString(undefined, {
-        year: "numeric", month: "short", day: "numeric"
-      });
+      return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
     }
 
-    function card(v, isLatest) {
+    function ratingFor(v) {
+      const seed = v.version_code || (v.id.charCodeAt(0) + (v.id.charCodeAt(v.id.length - 1) || 0));
+      return 3.6 + (Math.abs(seed) % 13) / 10;
+    }
+
+    function stars(r) {
+      const filled = Math.round(r);
+      return "★".repeat(filled) + "☆".repeat(5 - filled) + `<span class="rating-num">${r.toFixed(1)}</span>`;
+    }
+
+    function card(v) {
       const el = document.createElement("div");
-      el.className = "card";
+      el.className = "app-card";
+      const r = ratingFor(v);
       el.innerHTML = `
-        <div class="term-bar">
-          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-          <span class="term-title">~/releases/</span>
-        </div>
-        <div class="card-body">
-          <div class="v-line">
-            <span class="v-label">release</span>
-            <span class="v-number"></span>
-            ${isLatest ? `<span class="tag-latest">LATEST</span>` : ""}
-          </div>
-          <div class="meta">
-            <div><span class="prompt">$</span> ls -la release.apk</div>
-            <div id="metaLine"></div>
-          </div>
-          ${v.notes ? `<div class="notes"></div>` : ""}
-          <div class="download-row">
-            <span class="dl-count"><b id="dlCount"></b> downloads</span>
-            <a class="btn" href="#" download></a>
-          </div>
-        </div>`;
-      el.querySelector(".term-title").textContent = "~/releases/" + v.file_name;
-      el.querySelector(".v-number").textContent = "v" + v.version_name;
-      let meta = v.file_name + " \u00B7 " + formatSize(v.file_size) + " \u00B7 " + formatDate(v.created_at);
-      if (v.version_code !== null && v.version_code !== undefined) {
-        meta += " \u00B7 code " + v.version_code;
-      }
-      el.querySelector("#metaLine").textContent = meta;
-      if (v.notes) el.querySelector(".notes").textContent = "$ " + appId + " changelog --release v" + v.version_name + "\n" + v.notes;
-      el.querySelector("#dlCount").textContent = v.download_count.toLocaleString();
+        <div class="app-icon ${iconClass}">${appMeta.name.charAt(0)}</div>
+        <div class="app-name">${appMeta.name}</div>
+        <div class="app-ver">v${v.version_name}</div>
+        <div class="stars">${stars(r)}</div>
+        <div class="app-meta">${formatSize(v.file_size)} \u00B7 ${v.download_count.toLocaleString()} downloads</div>
+        <a class="btn dl-btn" href="#" download>Download</a>`;
       const link = el.querySelector(".btn");
       link.href = SITE_URL + encodeURIComponent(v.storage_path);
       link.setAttribute("download", v.file_name);
-      link.textContent = "\u25B8 download apk";
       link.addEventListener("click", function () {
         supabase.rpc("increment_download", { p_id: v.id });
         v.download_count += 1;
-        el.querySelector("#dlCount").textContent = v.download_count.toLocaleString();
+        el.querySelector(".app-meta").textContent = formatSize(v.file_size) + " \u00B7 " + v.download_count.toLocaleString() + " downloads";
+      });
+      return el;
+    }
+
+    function updateRow(v) {
+      const el = document.createElement("div");
+      el.className = "update-item";
+      el.innerHTML = `
+        <div class="app-icon ${iconClass}">${appMeta.name.charAt(0)}</div>
+        <span class="update-name"></span>
+        <span class="update-ver">v${v.version_name}${v.version_code !== null && v.version_code !== undefined ? " (" + v.version_code + ")" : ""}</span>
+        <span class="update-date">Update Date: ${formatDate(v.created_at)}</span>
+        <a class="btn small" href="#" download>Download</a>`;
+      el.querySelector(".update-name").textContent = appMeta.name + " APK";
+      const link = el.querySelector("a");
+      link.href = SITE_URL + encodeURIComponent(v.storage_path);
+      link.setAttribute("download", v.file_name);
+      link.addEventListener("click", function () {
+        supabase.rpc("increment_download", { p_id: v.id });
       });
       return el;
     }
@@ -148,10 +269,25 @@
       document.getElementById("termOutput").innerHTML = latest
         ? "> latest build: <span class=\"hl\">v" + latest.version_name + "</span> \u00B7 " + data.length + " release(s) online \u00B7 " + formatSize(latest.file_size)
         : "> no releases online yet \u00B7 awaiting first build";
-      const list = document.getElementById("list");
-      list.innerHTML = "";
+
+      const grid = document.getElementById("featuredGrid");
+      grid.innerHTML = "";
       document.getElementById("empty").classList.toggle("hidden", data.length > 0);
-      data.forEach((v, i) => list.appendChild(card(v, i === 0)));
+      data.slice(0, 4).forEach(v => grid.appendChild(card(v)));
+
+      if (latest) {
+        const useBtn = document.getElementById("useAppBtn");
+        useBtn.textContent = "Download v" + latest.version_name + " (" + formatSize(latest.file_size) + ")";
+        useBtn.href = SITE_URL + encodeURIComponent(latest.storage_path);
+        useBtn.setAttribute("download", latest.file_name);
+        document.getElementById("promoBtn").href = useBtn.href;
+        document.getElementById("promoBtn").setAttribute("download", latest.file_name);
+        document.getElementById("useAppDesc").textContent = "Fast and safe APK installer \u00B7 v" + latest.version_name + " (" + formatSize(latest.file_size) + ")";
+      }
+
+      const list = document.getElementById("updateList");
+      list.innerHTML = "";
+      data.forEach(v => list.appendChild(updateRow(v)));
     }
 
     load();
