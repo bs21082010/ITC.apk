@@ -105,10 +105,9 @@
     async function verifyKey(key) {
       const { data, error } = await supabase
         .from("admin_settings")
-        .select("value")
+        .select("value", { headers: { "x-admin-key": key } })
         .eq("name", "admin_key")
-        .maybeSingle()
-        .setHeaders({ "x-admin-key": key });
+        .maybeSingle();
       if (error) throw error;
       return !!data;
     }
