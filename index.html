@@ -5,174 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ITC - Download</title>
   <meta name="description" content="Download the ITC app. Latest APK versions.">
-  <style>
-    :root {
-      --bg: #070b14;
-      --panel: #0d1322;
-      --panel2: #131a2c;
-      --line: #1c2942;
-      --text: #c9d4e3;
-      --muted: #8b98ad;
-      --dim: #64748c;
-      --faint: #64748c;
-      --accent: #5ecd8e;
-      --blue: #1d4ed8;
-      --red: #f87171;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, Menlo, "Courier New", monospace;
-      min-height: 100vh;
-      overflow-x: hidden;
-      position: relative;
-    }
-    body::before {
-      content: "";
-      position: fixed; inset: 0; z-index: -2;
-      background:
-        radial-gradient(1000px 500px at 85% -10%, rgba(29,120,255,0.18), transparent 60%),
-        radial-gradient(800px 400px at 5% 110%, rgba(94,205,142,0.14), transparent 60%),
-        #070b14;
-    }
-    body::after {
-      content: "";
-      position: fixed; inset: 0; z-index: -1; pointer-events: none;
-      background-image: linear-gradient(rgba(94,205,142,0.045) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(94,205,142,0.045) 1px, transparent 1px);
-      background-size: 44px 44px;
-      mask-image: radial-gradient(circle at 50% 40%, black, transparent 80%);
-    }
-    .container { max-width: 760px; margin: 0 auto; padding: 48px 20px 24px; }
-    .hero-label {
-      display: inline-flex; align-items: center; gap: 8px;
-      color: var(--accent); font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
-      background: rgba(94,205,142,0.08); border: 1px solid rgba(94,205,142,0.25);
-      padding: 6px 12px; border-radius: 99px; margin-bottom: 18px;
-    }
-    .hero-label .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: blink 1.6s infinite; }
-    h1 { font-size: 52px; font-weight: 700; color: #fff; margin-bottom: 4px; letter-spacing: 1px; }
-    h1 .accent { color: var(--accent); }
-    .tagline { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
-    .tagline b { color: var(--accent); font-weight: 600; }
-    @keyframes blink { 50% { opacity: 0.15; } }
-
-    .term {
-      background: linear-gradient(180deg, var(--panel2), var(--panel));
-      border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-bottom: 22px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      animation: rise 0.5s ease both;
-    }
-    .term-bar { display: flex; align-items: center; gap: 6px; padding: 12px 16px; background: rgba(0,0,0,0.28); border-bottom: 1px solid var(--line); }
-    .term-bar .title { margin-left: 8px; color: var(--faint); font-size: 12px; }
-    .dot { width: 11px; height: 11px; border-radius: 50%; }
-    .dot.r { background: #f87171; } .dot.y { background: #fbbf24; } .dot.g { background: #34d399; }
-    .term-body { padding: 18px 16px 14px; font-size: 13px; line-height: 2; }
-    .ln { white-space: nowrap; }
-    .prompt { color: var(--accent); }
-    .cmd { color: #cbd5e1; }
-    .out { color: #aeb9cc; min-height: 20px; white-space: pre-wrap; }
-    .out .hl { color: var(--accent); font-weight: bold; }
-    .blinkchar { display: inline-block; width: 9px; height: 16px; background: var(--accent); vertical-align: middle; animation: blink 0.9s step-start infinite; }
-
-    .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 34px; }
-    .stat {
-      flex: 1; min-width: 150px; background: linear-gradient(180deg, rgba(19,26,44,0.9), rgba(13,16,31,0.9));
-      border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; position: relative; overflow: hidden;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-    .stat:hover { transform: translateY(-3px); border-color: rgba(94,205,142,0.4); }
-    .stat::after {
-      content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-      opacity: 0; transition: opacity 0.3s ease;
-    }
-    .stat:hover::after { opacity: 1; }
-    .stat-value { font-size: 30px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
-    .stat-label { font-size: 10px; color: var(--faint); letter-spacing: 2px; margin-top: 4px; display: block; }
-    .stat .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: blink 1.6s infinite; }
-
-    .card {
-      background: linear-gradient(180deg, rgba(16,22,38,0.95), rgba(10,14,27,0.95));
-      border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-bottom: 18px;
-      transform: translateY(0); opacity: 1;
-      animation: rise 0.55s cubic-bezier(0.22,1,0.36,1) both;
-      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-    .card:hover { transform: translateY(-4px); border-color: rgba(94,205,142,0.35); box-shadow: 0 18px 50px rgba(0,0,0,0.5); }
-    @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-    .card-body { padding: 20px 18px; }
-    .v-line { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
-    .v-label { font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: 2px; }
-    .v-number { font-size: 22px; font-weight: 700; color: #fff; }
-    .tag-latest {
-      background: linear-gradient(90deg, #14532d, #052e16); color: var(--accent); font-size: 10px; font-weight: 700;
-      padding: 3px 10px; border-radius: 99px; letter-spacing: 1.5px; border: 1px solid rgba(94,205,142,0.35);
-      animation: blink 2s infinite;
-    }
-    .meta { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
-    .notes {
-      color: var(--text); font-size: 12px; white-space: pre-wrap; background: rgba(0,0,0,0.3);
-      border: 1px dashed var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; line-height: 1.7;
-    }
-    .download-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
-    .dl-count { color: var(--faint); font-size: 12px; }
-    .dl-count b { color: var(--accent); }
-    .btn {
-      background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; text-decoration: none;
-      font-size: 14px; font-weight: 700; padding: 12px 26px; border-radius: 10px; letter-spacing: 0.5px;
-      position: relative; overflow: hidden; transition: transform 0.15s ease, box-shadow 0.15s ease;
-      box-shadow: 0 10px 26px rgba(29,78,216,0.35);
-      display: inline-block;
-    }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(29,78,216,0.5); }
-    .btn:active { transform: translateY(0); }
-    .btn::after {
-      content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
-      animation: shine 3s ease infinite;
-    }
-    @keyframes shine { 0%,60% { left: -100%; } 100% { left: 130%; } }
-    @keyframes none {}
-
-    .error { color: var(--red); font-size: 13px; margin-bottom: 18px; }
-    .hidden { display: none !important; }
-    .empty { color: var(--muted); font-size: 13px; line-height: 2.2; }
-    .empty .prompt { color: var(--accent); }
-    .footer { text-align: center; color: var(--faint); font-size: 12px; padding: 34px 20px 44px; }
-    .footer .ok { color: var(--accent); }
-
-    @media (max-width: 520px) {
-      h1 { font-size: 38px; }
-      .container { padding-top: 32px; }
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="hero">
     <div class="container">
-      <div class="hero-label"><span class="pulse"></span>android release server</div>
-      <h1><span id="appName">ITC</span><span class="accent">_</span></h1>
+      <div class="hero-label">android release server</div>
+      <h1 id="appName"></h1>
       <p class="tagline" id="tagline"></p>
 
       <div class="term">
         <div class="term-bar">
           <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-          <span class="title">itc@releases: ~/apks</span>
+          <span class="term-title">itc@releases: ~/apks</span>
         </div>
         <div class="term-body">
-          <div class="ln"><span class="prompt">$</span> <span class="cmd" id="cmdLine">itc --check-update --latest</span></div>
+          <div class="line"><span class="prompt">$</span> itc --check-update --latest</div>
           <div class="out" id="termOutput"></div>
-          <div class="ln"><span class="prompt">$</span><span class="blinkchar"></span></div>
+          <div class="line"><span class="prompt">$</span><span class="cursor"></span></div>
         </div>
       </div>
 
       <div class="stats">
-        <div class="stat"><span class="stat-value" id="statVersions">0</span><span class="stat-label">RELEASES</span></div>
-        <div class="stat"><span class="stat-value" id="statDownloads">0</span><span class="stat-label">DOWNLOADS</span></div>
-        <div class="stat"><span class="stat-value"><span class="pulse"></span>online</span><span class="stat-label">SERVER</span></div>
+        <div class="stat">
+          <span class="stat-value" id="statVersions">0</span>
+          <span class="stat-label">RELEASES</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="statDownloads">0</span>
+          <span class="stat-label">DOWNLOADS</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value"><span class="pulse"></span>online</span>
+          <span class="stat-label">SERVER</span>
+        </div>
       </div>
     </div>
   </header>
@@ -180,121 +49,107 @@
   <main class="container">
     <div id="error" class="error hidden"></div>
     <div id="list"></div>
-    <p id="empty" class="empty hidden"><span class="prompt">$</span> find releases --latest<br>&gt; no releases found. check back soon.</p>
+    <p id="empty" class="empty hidden"><span class="prompt">$</span> find releases --latest<br>no releases found. check back soon.</p>
   </main>
 
-  <footer class="footer"><span class="ok">&#9632;</span> itc_release_server &middot; all systems operational &middot; <span id="year"></span></footer>
+  <footer class="footer">
+    <div class="container" id="footerText"></div>
+  </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script>
-    var APP_URL = "https://iqfmvqdyrajrugghcetb.supabase.co";
-    var APP_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxZm12cWR5cmFqcnVnZ2hjZXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwNDQxODAsImV4cCI6MjEwMDYyMDE4MH0.xfmaddaRioiTM5c7HF6iIvHtqS9PREEotm8F_MbjV9k";
-    var BUCKET_NAME = "apks";
-    var APP_NAME = "ITC";
-    var SITE_URL = APP_URL + "/storage/v1/object/public/" + BUCKET_NAME + "/";
-    var API_URL = APP_URL + "/rest/v1/";
-
+    const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
     document.getElementById("appName").textContent = APP_NAME;
-    document.getElementById("tagline").innerHTML = "itc://" + APP_NAME.toLowerCase() + " <b>v0.0.0</b> &middot; direct apk distribution";
-    document.getElementById("year").textContent = new Date().getFullYear();
+    document.getElementById("tagline").innerHTML = "itc://" + APP_NAME.toLowerCase() + " <b>v2.1.0</b> \u00B7 direct apk distribution";
+    document.getElementById("footerText").innerHTML = "<span class=\"ok\">\u25A0</span> itc_release_server \u00B7 all systems operational \u00B7 " + new Date().getFullYear();
 
-    function fmtSize(b) {
-      if (b < 1024) return b + " B";
-      var u = ["KB", "MB", "GB"], v = b, i = -1;
-      while (v >= 1024 && i < 2) { v /= 1024; i++; }
-      return v.toFixed(v >= 100 ? 0 : 1) + " " + u[i];
-    }
-    function fmtDate(iso) {
-      var d = new Date(iso);
-      return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-    }
-    function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
-
-    function countUp(el, target, suffix) {
-      var dur = 700, start = null, from = parseInt(el.textContent) || 0;
-      function step(ts) {
-        if (!start) start = ts;
-        var p = Math.min((ts - start) / dur, 1);
-        var eased = 1 - Math.pow(1 - p, 3);
-        el.textContent = Math.round(from + (target - from) * eased).toLocaleString() + (suffix || "");
-        if (p < 1) requestAnimationFrame(step);
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      const units = ["KB", "MB", "GB"];
+      let value = bytes;
+      let unit = "B";
+      for (const u of units) {
+        value = value / 1024;
+        unit = u;
+        if (value < 1024) break;
       }
-      requestAnimationFrame(step);
+      return value.toFixed(value >= 100 ? 0 : 1) + " " + unit;
     }
 
-    function card(v, isLatest, i) {
-      var el = document.createElement("div");
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString(undefined, {
+        year: "numeric", month: "short", day: "numeric"
+      });
+    }
+
+    function card(v, isLatest) {
+      const el = document.createElement("div");
       el.className = "card";
-      el.style.animationDelay = (i * 0.15 + 0.3) + "s";
-      el.innerHTML =
-        '<div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>' +
-        '<span class="title">~/releases/' + esc(v.file_name) + '</span></div>' +
-        '<div class="card-body">' +
-          '<div class="v-line"><span class="v-label">release</span><span class="v-number">v' + esc(v.version_name) + '</span>' +
-          (isLatest ? '<span class="tag-latest">LATEST</span>' : '') + '</div>' +
-          '<div class="meta"><span class="prompt">$</span> ls -la release.apk &middot; ' + esc(v.file_name) + ' &middot; ' +
-          fmtSize(v.file_size) + ' &middot; ' + fmtDate(v.created_at) +
-          (v.version_code ? ' &middot; code ' + v.version_code : '') + '</div>' +
-          (v.notes ? '<div class="notes"><span class="prompt">$</span> itc changelog --release v' + esc(v.version_name) + "\n" + esc(v.notes) + '</div>' : '') +
-          '<div class="download-row"><span class="dl-count"><b>' + (v.download_count || 0).toLocaleString() + '</b> downloads</span>' +
-          '<a class="btn" href="' + SITE_URL + encodeURIComponent(v.storage_path) + '" download="' + esc(v.file_name) + '">&#9658; download apk</a></div>' +
-        '</div>';
-      var btn = el.querySelector(".btn");
-      var countEl = el.querySelector(".dl-count");
-      btn.addEventListener("click", function () {
-        try {
-          fetch(API_URL + "rpc/increment_download", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "apikey": APP_ANON_KEY, "Authorization": "Bearer " + APP_ANON_KEY },
-            body: JSON.stringify({ p_id: v.id })
-          }).catch(function () {});
-        } catch (e) {}
-        v.download_count = (v.download_count || 0) + 1;
-        countEl.innerHTML = "<b>" + v.download_count.toLocaleString() + "</b> downloads";
-        btn.textContent = "\u2713 downloading\u2026";
-        setTimeout(function () { btn.textContent = "\u25B8 download apk"; }, 2200);
+      el.innerHTML = `
+        <div class="term-bar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="term-title">~/releases/</span>
+        </div>
+        <div class="card-body">
+          <div class="v-line">
+            <span class="v-label">release</span>
+            <span class="v-number"></span>
+            ${isLatest ? `<span class="tag-latest">LATEST</span>` : ""}
+          </div>
+          <div class="meta">
+            <div><span class="prompt">$</span> ls -la release.apk</div>
+            <div id="metaLine"></div>
+          </div>
+          ${v.notes ? `<div class="notes"></div>` : ""}
+          <div class="download-row">
+            <span class="dl-count"><b id="dlCount"></b> downloads</span>
+            <a class="btn" href="#" download></a>
+          </div>
+        </div>`;
+      el.querySelector(".term-title").textContent = "~/releases/" + v.file_name;
+      el.querySelector(".v-number").textContent = "v" + v.version_name;
+      let meta = v.file_name + " \u00B7 " + formatSize(v.file_size) + " \u00B7 " + formatDate(v.created_at);
+      if (v.version_code !== null && v.version_code !== undefined) {
+        meta += " \u00B7 code " + v.version_code;
+      }
+      el.querySelector("#metaLine").textContent = meta;
+      if (v.notes) el.querySelector(".notes").textContent = "$ itc changelog --release v" + v.version_name + "\n" + v.notes;
+      el.querySelector("#dlCount").textContent = v.download_count.toLocaleString();
+      const link = el.querySelector(".btn");
+      link.href = SITE_URL + encodeURIComponent(v.storage_path);
+      link.setAttribute("download", v.file_name);
+      link.textContent = "\u25B8 download apk";
+      link.addEventListener("click", function () {
+        supabase.rpc("increment_download", { p_id: v.id });
+        v.download_count += 1;
+        el.querySelector("#dlCount").textContent = v.download_count.toLocaleString();
       });
       return el;
     }
 
-    function revealTerminal(outputHtml) {
-      var out = document.getElementById("termOutput");
-      var i = 0, ch = outputHtml;
-      function step() {
-        out.innerHTML = ch.slice(0, i) + '<span class="blinkchar"></span>';
-        i += 2;
-        if (i <= ch.length) setTimeout(step, 18);
-        else out.innerHTML = ch;
+    async function load() {
+      const { data, error } = await supabase
+        .from("apk_versions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        document.getElementById("error").textContent = "connection error: " + error.message;
+        document.getElementById("error").classList.remove("hidden");
+        return;
       }
-      step();
+      document.getElementById("statVersions").textContent = data.length;
+      document.getElementById("statDownloads").textContent = data.reduce((s, v) => s + (v.download_count || 0), 0).toLocaleString();
+      const latest = data[0];
+      document.getElementById("termOutput").innerHTML = latest
+        ? "> latest build: <span class=\"hl\">v" + latest.version_name + "</span> \u00B7 " + data.length + " release(s) online \u00B7 " + formatSize(latest.file_size)
+        : "> no releases online yet \u00B7 awaiting first build";
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+      document.getElementById("empty").classList.toggle("hidden", data.length > 0);
+      data.forEach((v, i) => list.appendChild(card(v, i === 0)));
     }
 
-    function load() {
-      fetch(API_URL + "apk_versions?select=*&order=created_at.desc", {
-        headers: { "apikey": APP_ANON_KEY, "Authorization": "Bearer " + APP_ANON_KEY }
-      })
-        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-        .then(function (data) {
-          var versions = data.length, downloads = data.reduce(function (s, v) { return s + (v.download_count || 0); }, 0);
-          countUp(document.getElementById("statVersions"), versions);
-          countUp(document.getElementById("statDownloads"), downloads);
-          var latest = data[0];
-          if (latest) {
-            document.getElementById("tagline").innerHTML = "itc://" + APP_NAME.toLowerCase() + " <b>v" + esc(latest.version_name) + "</b> &middot; direct apk distribution";
-          }
-          var text = latest
-            ? "> latest build: <span class=\"hl\">v" + esc(latest.version_name) + "</span> &middot; " + versions + " release(s) online &middot; " + fmtSize(latest.file_size)
-            : "> no releases online yet &middot; awaiting first build";
-          setTimeout(function () { revealTerminal(text); }, 350);
-          document.getElementById("empty").classList.toggle("hidden", data.length > 0);
-          var list = document.getElementById("list");
-          list.innerHTML = "";
-          data.forEach(function (v, i) { list.appendChild(card(v, i === 0, i)); });
-        })
-        .catch(function (err) {
-          document.getElementById("error").textContent = "connection error: " + err.message;
-          document.getElementById("error").classList.remove("hidden");
-        });
-    }
     load();
   </script>
 </body>
