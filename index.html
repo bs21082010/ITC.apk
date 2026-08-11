@@ -117,10 +117,27 @@
   </div>
 
   <div class="cookie-banner" id="cookieBanner">
-    <div>Our website uses necessary cookies to enable basic functions and optional cookies to help us to enhance your user experience. <a href="#">Learn more</a> about our cookie policy.</div>
+    <div>Our website uses necessary cookies to enable basic functions and optional cookies to help us to enhance your user experience. <button type="button" class="link-btn" id="cookieLearn">Learn more</button> about our cookie policy.</div>
     <div class="cookie-actions">
-      <button class="btn small outline" id="cookieNecessary">Only Necessary Cookies</button>
-      <button class="btn small" id="cookieAccept">Accept All</button>
+      <button type="button" class="btn small outline" id="cookieNecessary">Only Necessary Cookies</button>
+      <button type="button" class="btn small" id="cookieAccept">Accept All</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="cookieModal">
+    <div class="modal">
+      <div class="modal-bar">
+        <h3>Cookie Policy</h3>
+        <button type="button" class="modal-close" id="cookieModalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h4>Necessary cookies</h4>
+        <p>Required for the site to function: session login for the uploader console and your cookie choice itself. These cannot be switched off.</p>
+        <h4>Optional cookies</h4>
+        <p>Used only if you accept: nothing is tracked on this site today. If optional features are added later (e.g. analytics), they will only run after you choose "Accept All".</p>
+        <h4>Your choice</h4>
+        <p>You can change your mind any time by clearing your browser data. We store only one small flag in your browser: <code>itc_cookies</code> = <code>all</code> or <code>necessary</code>.</p>
+      </div>
     </div>
   </div>
 
@@ -163,13 +180,42 @@
     ).join("");
 
     const cookieBtn = document.getElementById("cookieBanner");
-    if (localStorage.getItem("itc_cookie_ok")) cookieBtn.classList.add("hidden");
+    const cookieModal = document.getElementById("cookieModal");
+    const COOKIE_KEY = "itc_cookies";
+
+    function getConsent() {
+      try { return localStorage.getItem(COOKIE_KEY); } catch (e) { return null; }
+    }
+
+    function setConsent(value) {
+      try { localStorage.setItem(COOKIE_KEY, value); } catch (e) {}
+    }
+
     function hideCookie() {
-      localStorage.setItem("itc_cookie_ok", "1");
       cookieBtn.classList.add("hidden");
     }
-    document.getElementById("cookieAccept").addEventListener("click", hideCookie);
-    document.getElementById("cookieNecessary").addEventListener("click", hideCookie);
+
+    function acceptAll() {
+      setConsent("all");
+      hideCookie();
+    }
+
+    function onlyNecessary() {
+      setConsent("necessary");
+      hideCookie();
+    }
+
+    if (getConsent()) hideCookie();
+    document.getElementById("cookieAccept").addEventListener("click", acceptAll);
+    document.getElementById("cookieNecessary").addEventListener("click", onlyNecessary);
+    document.getElementById("cookieLearn").addEventListener("click", () => cookieModal.classList.remove("hidden"));
+    document.getElementById("cookieModalClose").addEventListener("click", () => cookieModal.classList.add("hidden"));
+    cookieModal.addEventListener("click", e => {
+      if (e.target === cookieModal) cookieModal.classList.add("hidden");
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") cookieModal.classList.add("hidden");
+    });
 
     function formatSize(bytes) {
       if (bytes < 1024) return bytes + " B";
