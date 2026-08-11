@@ -3,3 +3,8 @@ const APP_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const BUCKET_NAME = "apks";
 const APP_NAME = "ITC";
 const SITE_URL = "https://iqfmvqdyrajrugghcetb.supabase.co/storage/v1/object/public/" + BUCKET_NAME + "/";
+const APPS = [
+  { id: "itc", name: "ITC" },
+  { id: "coder99", name: "Coder99" },
+  { id: "digital-dormatry", name: "Digital Dormatry" }
+];

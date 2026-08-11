@@ -35,6 +35,8 @@
     <div id="panelView" class="hidden">
       <div class="card">
         <h2 class="section-title" style="margin:0 0 4px;">Publish a new release</h2>
+        <label for="appSelect">App</label>
+        <select id="appSelect"></select>
         <label for="versionName">Version name</label>
         <input type="text" id="versionName" placeholder="e.g. 2.1.0">
         <label for="versionCode">Version code (optional)</label>
@@ -117,6 +119,8 @@
       $("loginView").classList.add("hidden");
       $("panelView").classList.remove("hidden");
       $("signOutBtn").classList.remove("hidden");
+      $("appSelect").innerHTML = APPS.map(a => `<option value="${a.id}">${a.name}</option>`).join("");
+      $("appSelect").addEventListener("change", () => loadVersions());
       loadVersions();
     }
 
@@ -190,6 +194,7 @@
       }
 
       const { error: insertError } = await supabase.from("apk_versions").insert({
+        app: $("appSelect").value,
         version_name: versionName,
         version_code: versionCode,
         file_name: selectedFile.name,
@@ -221,6 +226,7 @@
       const { data, error } = await supabase
         .from("apk_versions")
         .select("*")
+        .eq("app", $("appSelect").value)
         .order("created_at", { ascending: false });
       if (error) {
         showError("Failed to load versions: " + error.message);

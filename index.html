@@ -60,9 +60,12 @@
   <script src="config.js"></script>
   <script>
     const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
-    document.getElementById("appName").textContent = APP_NAME;
-    document.getElementById("tagline").innerHTML = "itc://" + APP_NAME.toLowerCase() + " <b>v2.1.0</b> \u00B7 direct apk distribution";
-    document.getElementById("footerText").innerHTML = "<span class=\"ok\">\u25A0</span> itc_release_server \u00B7 all systems operational \u00B7 " + new Date().getFullYear();
+    const appId = new URLSearchParams(location.search).get("app") || "itc";
+    const appMeta = APPS.find(a => a.id === appId) || APPS[0];
+    document.title = appMeta.name + " - Download";
+    document.getElementById("appName").textContent = appMeta.name;
+    document.getElementById("tagline").innerHTML = appMeta.id + "://" + appMeta.id + " <b>v2.1.0</b> \u00B7 direct apk distribution";
+    document.getElementById("footerText").innerHTML = "<span class=\"ok\">\u25A0</span> " + appMeta.id + "_release_server \u00B7 all systems operational \u00B7 " + new Date().getFullYear();
 
     function formatSize(bytes) {
       if (bytes < 1024) return bytes + " B";
@@ -114,7 +117,7 @@
         meta += " \u00B7 code " + v.version_code;
       }
       el.querySelector("#metaLine").textContent = meta;
-      if (v.notes) el.querySelector(".notes").textContent = "$ itc changelog --release v" + v.version_name + "\n" + v.notes;
+      if (v.notes) el.querySelector(".notes").textContent = "$ " + appId + " changelog --release v" + v.version_name + "\n" + v.notes;
       el.querySelector("#dlCount").textContent = v.download_count.toLocaleString();
       const link = el.querySelector(".btn");
       link.href = SITE_URL + encodeURIComponent(v.storage_path);
@@ -132,6 +135,7 @@
       const { data, error } = await supabase
         .from("apk_versions")
         .select("*")
+        .eq("app", appId)
         .order("created_at", { ascending: false });
       if (error) {
         document.getElementById("error").textContent = "connection error: " + error.message;

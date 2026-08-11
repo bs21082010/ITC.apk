@@ -456,6 +456,24 @@ label {
   text-transform: uppercase;
 }
 
+select {
+  width: 100%;
+  padding: 11px 13px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14.5px;
+  font-family: var(--mono);
+  cursor: pointer;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim), 0 0 14px rgba(43, 255, 136, 0.15);
+}
+
 input[type="text"],
 input[type="password"],
 input[type="email"],
