@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ITC - Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container page-header">
+    <h1># admin_console</h1>
+    <button id="signOutBtn" class="btn ghost hidden">Sign out</button>
+  </div>
+
+  <main class="container">
+    <div id="error" class="error hidden"></div>
+    <div id="success" class="success hidden"></div>
+
+    <div id="loginView">
+      <div class="card form-card">
+        <h2 class="section-title" style="margin:0 0 4px;">Admin key required</h2>
+        <p style="font-size:13.5px; color:var(--muted); margin-top:6px;">Authenticate with the uploader account to list and manage all downloads.</p>
+        <label for="email">Email</label>
+        <input type="email" id="email" autocomplete="email">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password">
+        <div style="margin-top:20px;">
+          <button id="loginBtn" class="btn" style="width:100%; justify-content:center;">AUTHENTICATE</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="panelView" class="hidden">
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-value" id="statReleases">0</span>
+          <span class="stat-label">RELEASES</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="statDownloads">0</span>
+          <span class="stat-label">TOTAL DOWNLOADS</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="statFiles">0</span>
+          <span class="stat-label">FILES ON STORAGE</span>
+        </div>
+      </div>
+
+      <h3 class="section-title">All downloads</h3>
+      <select id="appFilter" style="margin-bottom:14px;">
+        <option value="all">All apps</option>
+      </select>
+      <div id="list"></div>
+      <p id="empty" class="empty hidden">no downloads found for this filter.</p>
+      <div style="margin-top:20px;">
+        <a class="btn" href="upload.html">+ Publish new release</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script>
+    const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
+    const $ = id => document.getElementById(id);
+
+    function appMeta(id) {
+      return APPS.find(a => a.id === id) || { id: id, name: id };
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      const units = ["KB", "MB", "GB"];
+      let value = bytes;
+      let unit = "B";
+      for (const u of units) {
+        value = value / 1024;
+        unit = u;
+        if (value < 1024) break;
+      }
+      return value.toFixed(value >= 100 ? 0 : 1) + " " + unit;
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    }
+
+    function showError(msg) {
+      $("error").textContent = msg;
+      $("error").classList.remove("hidden");
+    }
+
+    function showSuccess(msg) {
+      $("success").textContent = msg;
+      $("success").classList.remove("hidden");
+    }
+
+    function clearMessages() {
+      $("error").classList.add("hidden");
+      $("success").classList.add("hidden");
+    }
+
+    $("loginBtn").addEventListener("click", async () => {
+      clearMessages();
+      $("loginBtn").disabled = true;
+      const { error } = await supabase.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+      $("loginBtn").disabled = false;
+      if (error) {
+        showError("Authentication failed: " + error.message);
+        return;
+      }
+      enterPanel();
+    });
+
+    $("signOutBtn").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      location.reload();
+    });
+
+    function enterPanel() {
+      $("loginView").classList.add("hidden");
+      $("panelView").classList.remove("hidden");
+      $("signOutBtn").classList.remove("hidden");
+      $("appFilter").innerHTML = '<option value="all">All apps</option>' +
+        APPS.map(a => `<option value="${a.id}">${a.name}</option>`).join("");
+      $("appFilter").addEventListener("change", loadRows);
+      loadRows();
+    }
+
+    async function loadRows() {
+      const filter = $("appFilter").value;
+      let query = supabase.from("apk_versions").select("*").order("created_at", { ascending: false });
+      if (filter !== "all") query = query.eq("app", filter);
+      const { data, error } = await query;
+      if (error) {
+        showError("Failed to load: " + error.message);
+        return;
+      }
+      $("statReleases").textContent = data.length;
+      $("statDownloads").textContent = data.reduce((s, v) => s + (v.download_count || 0), 0).toLocaleString();
+      $("statFiles").textContent = data.filter(v => v.file_size > 0).length;
+
+      const list = $("list");
+      list.innerHTML = "";
+      $("empty").classList.toggle("hidden", data.length > 0);
+      data.forEach(v => {
+        const meta = appMeta(v.app);
+        const el = document.createElement("div");
+        el.className = "card";
+        el.innerHTML = `
+          <div class="admin-row">
+            <span class="app-tag tag-${v.app}">${meta.name}</span>
+            <span style="font-weight:700;">v${v.version_name}${v.version_code !== null && v.version_code !== undefined ? " (" + v.version_code + ")" : ""}</span>
+            <span class="update-ver">${v.file_name}</span>
+            <span class="update-date">${formatSize(v.file_size)} \u00B7 ${formatDate(v.created_at)}</span>
+            <span class="update-date"><b style="color:var(--blue);">${v.download_count.toLocaleString()}</b> downloads</span>
+            <div class="actions">
+              <a class="btn small outline" href="${SITE_URL + encodeURIComponent(v.storage_path)}" target="_blank" rel="noopener">View</a>
+              <button class="btn small danger">Delete</button>
+            </div>
+          </div>`;
+        el.querySelector(".btn.danger").addEventListener("click", () => deleteRow(v, el));
+        list.appendChild(el);
+      });
+    }
+
+    async function deleteRow(v, el) {
+      if (!confirm("Delete v" + v.version_name + " of " + appMeta(v.app).name + "? This cannot be undone.")) return;
+      el.querySelector(".btn.danger").disabled = true;
+      const { error: fileError } = await supabase.storage.from(BUCKET_NAME).remove([v.storage_path]);
+      if (fileError) {
+        showError("Failed to delete file: " + fileError.message);
+        return;
+      }
+      const { error: rowError } = await supabase.from("apk_versions").delete().eq("id", v.id);
+      if (rowError) {
+        showError("Failed to remove version: " + rowError.message);
+        return;
+      }
+      el.remove();
+      showSuccess("Deleted v" + v.version_name + ".");
+      loadRows();
+    }
+
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) enterPanel();
+    })();
+  </script>
+</body>
+</html>

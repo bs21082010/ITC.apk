@@ -15,22 +15,8 @@
     <div class="container">
       <a class="logo" href="index.html"><span class="logo-ic" id="logoIc"></span><span id="logoName"></span></a>
       <nav class="nav" id="navApps"></nav>
-      <div class="header-right">
-        <span class="manage-text">Manage Your Downloaded Apps</span>
-        <a class="btn" href="upload.html">LOG IN</a>
-      </div>
     </div>
   </header>
-
-  <div class="promo">
-    <div class="container">
-      <div>
-        <h3>Add APK Downloader Chrome Extension</h3>
-        <p>Download free APK/XAPK files from Google Play Store without a login account.</p>
-      </div>
-      <a class="btn" id="promoBtn" href="#">Install Now</a>
-    </div>
-  </div>
 
   <header class="hero">
     <div class="container">
@@ -72,7 +58,7 @@
 
     <h2 class="section-title">Top <span id="featTitle"></span><span class="sub">Latest releases</span></h2>
     <div id="featuredGrid" class="featured-grid"></div>
-    <p id="empty" class="empty hidden"><span class="prompt">$</span> find releases --latest<br>no releases online yet. check back soon.</p>
+    <p id="empty" class="empty hidden"><span class="prompt">$</span> find releases --latest<br>no releases published yet. the developer has not uploaded a build.</p>
 
     <h2 class="section-title">Trending Searches</h2>
     <div class="trending" id="trending"></div>
@@ -126,6 +112,7 @@
     <div class="container">
       <span id="copyright"></span>
       <span id="footerStatus"></span>
+      <a class="admin-link" href="admin.html">admin_console</a>
     </div>
   </div>
 
@@ -280,9 +267,13 @@
         useBtn.textContent = "Download v" + latest.version_name + " (" + formatSize(latest.file_size) + ")";
         useBtn.href = SITE_URL + encodeURIComponent(latest.storage_path);
         useBtn.setAttribute("download", latest.file_name);
-        document.getElementById("promoBtn").href = useBtn.href;
-        document.getElementById("promoBtn").setAttribute("download", latest.file_name);
         document.getElementById("useAppDesc").textContent = "Fast and safe APK installer \u00B7 v" + latest.version_name + " (" + formatSize(latest.file_size) + ")";
+      } else {
+        const useBtn = document.getElementById("useAppBtn");
+        useBtn.textContent = "No release available";
+        useBtn.classList.add("disabled");
+        useBtn.removeAttribute("href");
+        document.getElementById("useAppDesc").textContent = "Fast and safe APK installer \u00B7 no build uploaded yet";
       }
 
       const list = document.getElementById("updateList");
