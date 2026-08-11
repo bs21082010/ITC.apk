@@ -103,11 +103,10 @@
     }
 
     async function verifyKey(key) {
-      const { data, error } = await supabase
-        .from("admin_settings")
-        .select("value", { headers: { "x-admin-key": key } })
-        .eq("name", "admin_key")
-        .maybeSingle();
+      const client = window.supabase.createClient(APP_URL, APP_ANON_KEY, {
+        global: { headers: { "x-admin-key": key } }
+      });
+      const { data, error } = await client.from("admin_settings").select("value").eq("name", "admin_key").maybeSingle();
       if (error) throw error;
       return !!data;
     }
