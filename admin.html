@@ -193,7 +193,7 @@
         el.querySelector(".btn.danger").disabled = false;
         return;
       }
-      await supabase.storage.from(BUCKET_NAME).remove([v.storage_path]);
+      try { await supabase.storage.from(BUCKET_NAME).remove([v.storage_path]); } catch (e) {}
       el.remove();
       showSuccess("Deleted v" + v.version_name + ".");
       loadRows();
