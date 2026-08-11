@@ -12,7 +12,7 @@
 <body>
   <div class="container page-header">
     <h1># admin_console</h1>
-    <button id="signOutBtn" class="btn ghost hidden">Sign out</button>
+    <button id="signOutBtn" class="btn ghost hidden">Lock</button>
   </div>
 
   <main class="container">
@@ -22,13 +22,11 @@
     <div id="loginView">
       <div class="card form-card">
         <h2 class="section-title" style="margin:0 0 4px;">Admin key required</h2>
-        <p style="font-size:13.5px; color:var(--muted); margin-top:6px;">Authenticate with the uploader account to list and manage all downloads.</p>
-        <label for="email">Email</label>
-        <input type="email" id="email" autocomplete="email">
-        <label for="password">Password</label>
-        <input type="password" id="password" autocomplete="current-password">
+        <p style="font-size:13.5px; color:var(--muted); margin-top:6px;">Enter the admin key to list and manage all downloads.</p>
+        <label for="adminKey">Admin key</label>
+        <input type="password" id="adminKey" autocomplete="current-password">
         <div style="margin-top:20px;">
-          <button id="loginBtn" class="btn" style="width:100%; justify-content:center;">AUTHENTICATE</button>
+          <button id="loginBtn" class="btn" style="width:100%; justify-content:center;">UNLOCK</button>
         </div>
       </div>
     </div>
@@ -66,6 +64,7 @@
   <script>
     const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
     const $ = id => document.getElementById(id);
+    let adminKey = sessionStorage.getItem("admin_key") || null;
 
     function appMeta(id) {
       return APPS.find(a => a.id === id) || { id: id, name: id };
@@ -103,23 +102,38 @@
       $("success").classList.add("hidden");
     }
 
+    async function verifyKey(key) {
+      const { data, error } = await supabase
+        .from("admin_settings")
+        .select("value")
+        .eq("name", "admin_key")
+        .maybeSingle()
+        .setHeaders({ "x-admin-key": key });
+      if (error) throw error;
+      return !!data;
+    }
+
     $("loginBtn").addEventListener("click", async () => {
       clearMessages();
       $("loginBtn").disabled = true;
-      const { error } = await supabase.auth.signInWithPassword({
-        email: $("email").value.trim(),
-        password: $("password").value
-      });
-      $("loginBtn").disabled = false;
-      if (error) {
-        showError("Authentication failed: " + error.message);
-        return;
+      const key = $("adminKey").value;
+      try {
+        const ok = await verifyKey(key);
+        if (!ok) throw new Error("invalid key");
+        adminKey = key;
+        sessionStorage.setItem("admin_key", key);
+        enterPanel();
+      } catch (e) {
+        showError("Access denied: " + e.message);
+      } finally {
+        $("loginBtn").disabled = false;
+        $("adminKey").value = "";
       }
-      enterPanel();
     });
 
-    $("signOutBtn").addEventListener("click", async () => {
-      await supabase.auth.signOut();
+    $("signOutBtn").addEventListener("click", () => {
+      adminKey = null;
+      sessionStorage.removeItem("admin_key");
       location.reload();
     });
 
@@ -173,24 +187,27 @@
     async function deleteRow(v, el) {
       if (!confirm("Delete v" + v.version_name + " of " + appMeta(v.app).name + "? This cannot be undone.")) return;
       el.querySelector(".btn.danger").disabled = true;
-      const { error: fileError } = await supabase.storage.from(BUCKET_NAME).remove([v.storage_path]);
-      if (fileError) {
-        showError("Failed to delete file: " + fileError.message);
+      const { error: rpcError } = await supabase.rpc("admin_delete_release", { p_key: adminKey, p_id: v.id });
+      if (rpcError) {
+        showError("Failed to remove version: " + rpcError.message);
+        el.querySelector(".btn.danger").disabled = false;
         return;
       }
-      const { error: rowError } = await supabase.from("apk_versions").delete().eq("id", v.id);
-      if (rowError) {
-        showError("Failed to remove version: " + rowError.message);
-        return;
-      }
+      await supabase.storage.from(BUCKET_NAME).remove([v.storage_path]);
       el.remove();
       showSuccess("Deleted v" + v.version_name + ".");
       loadRows();
     }
 
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) enterPanel();
+      if (adminKey) {
+        const ok = await verifyKey(adminKey);
+        if (ok) enterPanel();
+        else {
+          sessionStorage.removeItem("admin_key");
+          adminKey = null;
+        }
+      }
     })();
   </script>
 </body>
