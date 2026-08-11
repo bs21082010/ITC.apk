@@ -63,7 +63,7 @@
   <script src="supabase.js"></script>
   <script src="config.js"></script>
   <script>
-    const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
+    const sb = window.supabase.createClient(APP_URL, APP_ANON_KEY);
     const $ = id => document.getElementById(id);
     let adminKey = null;
     try {
@@ -162,7 +162,7 @@
 
     async function loadRows() {
       const filter = $("appFilter").value;
-      let query = supabase.from("apk_versions").select("*").order("created_at", { ascending: false });
+      let query = sb.from("apk_versions").select("*").order("created_at", { ascending: false });
       if (filter !== "all") query = query.eq("app", filter);
       const { data, error } = await query;
       if (error) {
@@ -200,13 +200,13 @@
     async function deleteRow(v, el) {
       if (!confirm("Delete v" + v.version_name + " of " + appMeta(v.app).name + "? This cannot be undone.")) return;
       el.querySelector(".btn.danger").disabled = true;
-      const { error: rpcError } = await supabase.rpc("admin_delete_release", { p_key: adminKey, p_id: v.id });
+      const { error: rpcError } = await sb.rpc("admin_delete_release", { p_key: adminKey, p_id: v.id });
       if (rpcError) {
         showError("Failed to remove version: " + rpcError.message);
         el.querySelector(".btn.danger").disabled = false;
         return;
       }
-      try { await supabase.storage.from(BUCKET_NAME).remove([v.storage_path]); } catch (e) {}
+      try { await sb.storage.from(BUCKET_NAME).remove([v.storage_path]); } catch (e) {}
       el.remove();
       showSuccess("Deleted v" + v.version_name + ".");
       loadRows();

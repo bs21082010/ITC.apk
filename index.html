@@ -60,7 +60,7 @@
   <script src="supabase.js"></script>
   <script src="config.js"></script>
   <script>
-    const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
+    const sb = window.supabase.createClient(APP_URL, APP_ANON_KEY);
     const appId = new URLSearchParams(location.search).get("app") || "itc";
     const appMeta = APPS.find(a => a.id === appId) || APPS[0];
     document.title = appMeta.name + " - Download";
@@ -125,7 +125,7 @@
       link.setAttribute("download", v.file_name);
       link.textContent = "\u25B8 download apk";
       link.addEventListener("click", function () {
-        supabase.rpc("increment_download", { p_id: v.id });
+        sb.rpc("increment_download", { p_id: v.id });
         v.download_count += 1;
         el.querySelector("#dlCount").textContent = v.download_count.toLocaleString();
       });

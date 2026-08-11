@@ -63,7 +63,7 @@
   <script src="supabase.js"></script>
   <script src="config.js"></script>
   <script>
-    const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
+    const sb = window.supabase.createClient(APP_URL, APP_ANON_KEY);
 
     const $ = id => document.getElementById(id);
     let selectedFile = null;
@@ -101,7 +101,7 @@
       $("loginBtn").disabled = true;
       const email = $("email").value.trim();
       const password = $("password").value;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await sb.auth.signInWithPassword({ email, password });
       $("loginBtn").disabled = false;
       if (error) {
         showError("Sign in failed: " + error.message);
@@ -111,7 +111,7 @@
     });
 
     $("signOutBtn").addEventListener("click", async () => {
-      await supabase.auth.signOut();
+      await sb.auth.signOut();
       location.reload();
     });
 
@@ -176,7 +176,7 @@
       $("progressWrap").classList.remove("hidden");
       $("progressBar").style.width = "0%";
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await sb.storage
         .from(BUCKET_NAME)
         .upload(path, selectedFile, {
           cacheControl: "3600",
@@ -193,7 +193,7 @@
         return;
       }
 
-      const { error: insertError } = await supabase.from("apk_versions").insert({
+      const { error: insertError } = await sb.from("apk_versions").insert({
         app: $("appSelect").value,
         version_name: versionName,
         version_code: versionCode,
@@ -204,7 +204,7 @@
       });
 
       if (insertError) {
-        await supabase.storage.from(BUCKET_NAME).remove([path]);
+        await sb.storage.from(BUCKET_NAME).remove([path]);
         showError("Publish failed: " + insertError.message);
         $("uploadBtn").disabled = false;
         return;
@@ -259,12 +259,12 @@
     async function deleteVersion(v, el) {
       if (!confirm("Delete version " + v.version_name + "? This cannot be undone.")) return;
       el.querySelector(".btn").disabled = true;
-      const { error: fileError } = await supabase.storage.from(BUCKET_NAME).remove([v.storage_path]);
+      const { error: fileError } = await sb.storage.from(BUCKET_NAME).remove([v.storage_path]);
       if (fileError) {
         showError("Failed to delete file: " + fileError.message);
         return;
       }
-      const { error: rowError } = await supabase.from("apk_versions").delete().eq("id", v.id);
+      const { error: rowError } = await sb.from("apk_versions").delete().eq("id", v.id);
       if (rowError) {
         showError("Failed to remove version: " + rowError.message);
         return;
@@ -274,7 +274,7 @@
     }
 
     (async () => {
-      const { data } = await supabase.auth.getSession();
+      const { data } = await sb.auth.getSession();
       if (data.session) enterPanel();
     })();
   </script>
