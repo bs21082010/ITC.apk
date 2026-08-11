@@ -28,6 +28,7 @@
         <div style="margin-top:20px;">
           <button id="loginBtn" class="btn" style="width:100%; justify-content:center;">UNLOCK</button>
         </div>
+        <p id="loadStatus" style="font-size:12px; color:var(--muted); margin-top:10px; text-align:center;">loading engine...</p>
       </div>
     </div>
 
@@ -59,12 +60,26 @@
     </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.js"></script>
   <script src="config.js"></script>
   <script>
     const supabase = window.supabase.createClient(APP_URL, APP_ANON_KEY);
     const $ = id => document.getElementById(id);
-    let adminKey = sessionStorage.getItem("admin_key") || null;
+    let adminKey = null;
+    try {
+      adminKey = sessionStorage.getItem("admin_key") || null;
+    } catch (e) {
+      adminKey = null;
+    }
+    document.getElementById("loadStatus").textContent = "engine loaded";
+    window.onerror = function (msg, src, line, col, err) {
+      const el = document.getElementById("error");
+      if (el) {
+        el.textContent = "JS error: " + msg + " (" + (line || "") + ")";
+        el.classList.remove("hidden");
+      }
+      return false;
+    };
 
     function appMeta(id) {
       return APPS.find(a => a.id === id) || { id: id, name: id };
